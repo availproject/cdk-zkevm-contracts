@@ -46,6 +46,7 @@ async function main() {
         "adminZkEVM",
         "forkID",
         "consensusContract",
+        "availBridgeAddress"
     ];
 
     for (const parameterName of mandatoryDeploymentParameters) {
@@ -64,6 +65,7 @@ async function main() {
         adminZkEVM,
         forkID,
         consensusContract,
+        availBridgeAddress,
     } = createRollupParameters;
 
     const supportedConensus = ["PolygonZkEVMEtrog", "PolygonValidiumEtrog"];
@@ -74,7 +76,7 @@ async function main() {
 
     const dataAvailabilityProtocol = createRollupParameters.dataAvailabilityProtocol || "PolygonDataCommittee";
 
-    const supporteDataAvailabilityProtocols = ["PolygonDataCommittee"];
+    const supporteDataAvailabilityProtocols = ["PolygonDataCommittee", "AvailDA"];
 
     if (
         consensusContract.includes("PolygonValidium") &&
@@ -296,6 +298,38 @@ async function main() {
         }
 
         outputJson.polygonDataCommitteeAddress = polygonDataCommittee?.target;
+    }else if(consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "AvailDA"){
+        const AvailAttestationContract = (await ethers.getContractFactory("AvailAttestation", deployer)) as any;
+        let availAttestation;
+
+        for (let i = 0; i < attemptsDeployProxy; i++) {
+            try {
+                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [availBridgeAddress], {
+                    unsafeAllow: ["constructor"],
+                });
+                break;
+            } catch (error: any) {
+                console.log(`attempt ${i}`);
+                console.log("upgrades.deployProxy of availAttestation ", error.message);
+            }
+            // reach limits of attempts
+            if (i + 1 === attemptsDeployProxy) {
+                throw new Error("availAttestation contract has not been deployed");
+            }
+        }
+        await availAttestation?.waitForDeployment();
+
+        // Load data commitee
+        const PolygonValidiumContract = (await PolygonconsensusFactory.attach(newZKEVMAddress)) as PolygonValidium;
+        // add data commitee to the consensus contract
+        await (await PolygonValidiumContract.setDataAvailabilityProtocol(availAttestation?.target as any)).wait();
+        console.log("#######################\n");
+        console.log("DataAvailabilityProtocol is set to:", await PolygonValidiumContract.dataAvailabilityProtocol());
+        console.log("RollupManager:", await PolygonValidiumContract.rollupManager());
+
+        await (await availAttestation?.transferOwnership(adminZkEVM)).wait();
+
+        outputJson.availAttestationAddress = availAttestation?.target;
     }
 
     // Assert admin address
