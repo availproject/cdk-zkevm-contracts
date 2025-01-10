@@ -45,6 +45,14 @@ const config: HardhatUserConfig = {
                     },
                     evmVersion: "shanghai",
                 },
+            }, {
+                version: "0.8.25",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 999999,
+                    },
+                },
             },
             {
                 version: "0.6.11",
@@ -80,7 +88,7 @@ const config: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 500,
+                        runs: 1,
                     },
                     evmVersion: "shanghai",
                 }, // try yul optimizer

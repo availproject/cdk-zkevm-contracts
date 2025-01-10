@@ -12,5 +12,7 @@
     "deployerPvtKey": "",
     "maxFeePerGas":"",
     "maxPriorityFeePerGas":"",
-    "multiplierGas": ""
+    "multiplierGas": "",
+    "availBridgeAddress": "",
+    "dataAvailabilityProtocol": "AvailDA"
 }
