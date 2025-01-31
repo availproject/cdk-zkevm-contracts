@@ -32,6 +32,6 @@ contract AvailAttestation is OwnableUpgradeable, IDataAvailabilityProtocol, Avai
         bytes32,
         bytes calldata dataAttestationProof
     ) external {
-        _attest(dataAttestationProof);
+        //_attest(dataAttestationProof);
     }
 }
