@@ -299,13 +299,20 @@ async function main() {
 
         outputJson.polygonDataCommitteeAddress = polygonDataCommittee?.target;
     }else if(consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "AvailDA"){
+
+        const AvailBridgeMock = await ethers.getContractFactory("AvailBridgeMock", deployer)
+        const mockAvailBridge = await AvailBridgeMock.deploy();
+        await mockAvailBridge.waitForDeployment();
+        console.log("MockAvailBridge deployed at:", mockAvailBridge.target);
+
         const AvailAttestationContract = (await ethers.getContractFactory("AvailAttestation", deployer)) as any;
         let availAttestation;
 
         for (let i = 0; i < attemptsDeployProxy; i++) {
             try {
-                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [availBridgeAddress], {
+                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [mockAvailBridge.target], {
                     unsafeAllow: ["constructor"],
+                    initializer: "initialize"
                 });
                 break;
             } catch (error: any) {

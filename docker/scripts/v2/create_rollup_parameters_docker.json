@@ -13,5 +13,6 @@
     "maxFeePerGas": "",
     "maxPriorityFeePerGas": "",
     "multiplierGas": "",
+    "availBridgeAddress": "0x0000000000000000000000000000000000000000",
     "dataAvailabilityProtocol": "AvailDA"
 }
