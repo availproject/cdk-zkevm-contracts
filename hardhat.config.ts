@@ -83,12 +83,22 @@ const config: HardhatUserConfig = {
             },
         ],
         overrides: {
+            "contracts/v2/sovereignChains/BridgeL2SovereignChain.sol": {
+                version: "0.8.20",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 20,
+                    },
+                    evmVersion: "shanghai",
+                }, // try yul optimizer
+            },
             "contracts/v2/PolygonRollupManager.sol": {
                 version: "0.8.20",
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 1,
+                        runs: 500, // Should have the same optimizations as PolygonTransparentProxy
                     },
                     evmVersion: "shanghai",
                 }, // try yul optimizer
@@ -108,7 +118,7 @@ const config: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 200,
+                        runs: 500, // Should have the same optimizations as PolygonTransparentProxy
                     },
                     evmVersion: "shanghai",
                 }, // try yul optimizer
@@ -118,7 +128,7 @@ const config: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 10,
+                        runs: 500, // Should have the same optimizations as PolygonTransparentProxy
                     },
                     evmVersion: "shanghai",
                 }, // try yul optimizer
