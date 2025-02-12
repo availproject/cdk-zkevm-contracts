@@ -101,7 +101,7 @@ async function main() {
 
     const dataAvailabilityProtocol = createRollupParameters.dataAvailabilityProtocol || "PolygonDataCommittee";
 
-    const supporteDataAvailabilityProtocols = ["PolygonDataCommittee", "AvailDA"];
+    const supportedDataAvailabilityProtocols = ["PolygonDataCommittee", "AvailDA"];
 
     if (
         consensusContract.includes("PolygonValidiumEtrog") &&
