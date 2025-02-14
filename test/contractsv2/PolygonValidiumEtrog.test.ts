@@ -1,6 +1,6 @@
 /* eslint-disable no-plusplus, no-await-in-loop */
-import {expect} from "chai";
-import {ethers, network, upgrades} from "hardhat";
+import { expect } from "chai";
+import { ethers, network, upgrades } from "hardhat";
 import {
     VerifierRollupHelperMock,
     ERC20PermitMock,
@@ -12,18 +12,19 @@ import {
     TokenWrapped,
     Address,
     PolygonRollupManagerEmptyMock__factory,
+    AvailAttestation,
 } from "../../typechain-types";
-import {takeSnapshot, time} from "@nomicfoundation/hardhat-network-helpers";
-import {processorUtils, contractUtils, MTBridge, mtBridgeUtils} from "@0xpolygonhermez/zkevm-commonjs";
-import {array} from "yargs";
-import {PolygonDataCommittee} from "../../typechain-types/contracts/v2/consensus/dataComittee";
-const {calculateSnarkInput, calculateAccInputHash, calculateBatchHashData} = contractUtils;
+import { takeSnapshot, time } from "@nomicfoundation/hardhat-network-helpers";
+import { processorUtils, contractUtils, MTBridge, mtBridgeUtils } from "@0xpolygonhermez/zkevm-commonjs";
+import { array } from "yargs";
+import { PolygonDataCommittee } from "../../typechain-types/contracts/v2/consensus/dataComittee";
+const { calculateSnarkInput, calculateAccInputHash, calculateBatchHashData } = contractUtils;
 
 type BatchDataStructEtrog = PolygonRollupBaseEtrog.BatchDataStruct;
 type ValidiumBatchData = PolygonValidiumEtrog.ValidiumBatchDataStruct;
 
 const MerkleTreeBridge = MTBridge;
-const {verifyMerkleProof, getLeafValue} = mtBridgeUtils;
+const { verifyMerkleProof, getLeafValue } = mtBridgeUtils;
 
 function calculateGlobalExitRoot(mainnetExitRoot: any, rollupExitRoot: any) {
     return ethers.solidityPackedKeccak256(["bytes32", "bytes32"], [mainnetExitRoot, rollupExitRoot]);
@@ -45,6 +46,7 @@ describe("PolygonValidiumEtrog", () => {
     let rollupManagerContract: PolygonRollupManagerMock;
     let PolygonZKEVMV2Contract: PolygonValidiumEtrog;
     let PolygonDataCommitee: PolygonDataCommittee;
+    let AvailAttestation: AvailAttestation;
 
     const polTokenName = "POL Token";
     const polTokenSymbol = "POL";
@@ -186,6 +188,19 @@ describe("PolygonValidiumEtrog", () => {
         })) as any as PolygonDataCommittee;
 
         await PolygonDataCommitee.waitForDeployment();
+
+        // Deploy mock AvailBridge and AvailAttestation contract
+        const mockAvailBridgeFactory = await ethers.getContractFactory("AvailBridgeMock");
+        const mockAvailBridge = await mockAvailBridgeFactory.deploy();
+        await mockAvailBridge.waitForDeployment();
+
+        const availAttestationFactory = await ethers.getContractFactory("AvailAttestation");
+        AvailAttestation = (await upgrades.deployProxy(availAttestationFactory, [mockAvailBridge.target], {
+            unsafeAllow: ["constructor"],
+            initializer: "initialize"
+        })) as any as AvailAttestation
+
+        await AvailAttestation.waitForDeployment();
     });
 
     it("should check the initalized parameters", async () => {
@@ -212,7 +227,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -231,7 +246,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.be.revertedWith("Initializable: contract is already initialized");
     });
@@ -260,7 +275,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -279,7 +294,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.be.revertedWith("Initializable: contract is already initialized");
     });
@@ -296,7 +311,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -516,7 +531,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
         const blockCreatedRollup = await ethers.provider.getBlock("latest");
@@ -722,7 +737,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
         const blockCreatedRollup = await ethers.provider.getBlock("latest");
@@ -1001,7 +1016,7 @@ describe("PolygonValidiumEtrog", () => {
         // Assert global exit root
         await ethers.provider.send("hardhat_impersonateAccount", [rollupManagerContract.target]);
         const rolllupManagerSigner = await ethers.getSigner(rollupManagerContract.target as any);
-        await polygonZkEVMGlobalExitRoot.connect(rolllupManagerSigner).updateExitRoot(rootRollups, {gasPrice: 0});
+        await polygonZkEVMGlobalExitRoot.connect(rolllupManagerSigner).updateExitRoot(rootRollups, { gasPrice: 0 });
 
         expect(await polygonZkEVMGlobalExitRoot.lastMainnetExitRoot()).to.be.equal(ethers.ZeroHash);
         expect(await polygonZkEVMGlobalExitRoot.lastRollupExitRoot()).to.be.equal(rootRollups);
@@ -1102,7 +1117,7 @@ describe("PolygonValidiumEtrog", () => {
                 newWrappedToken.target,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -1170,7 +1185,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -1355,7 +1370,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -1468,7 +1483,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -1570,7 +1585,7 @@ describe("PolygonValidiumEtrog", () => {
                 gasTokenAddress,
                 urlSequencer,
                 networkName,
-                {gasPrice: 0}
+                { gasPrice: 0 }
             )
         ).to.emit(PolygonZKEVMV2Contract, "InitialSequenceBatches");
 
@@ -1701,6 +1716,22 @@ describe("PolygonValidiumEtrog", () => {
 
         // calcualte accINputHash
         expect(await PolygonZKEVMV2Contract.lastAccInputHash()).to.be.equal(expectedAccInputHash3);
+    });
+
+    it("should check verifyMessage method for availDA dataavailability protocol", async () => {
+        // Define the encoded MerkleProofInput as a bytes string
+        const encodedMerkleProofInput =
+            "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001804a023000904dceb0c6c85263203620f27b5f5afe08d7130f6d364adcdb8262660000000000000000000000000000000000000000000000000000000000000018e33dc60ebc7bff9ce72120cf6c9e8c8e0cc4e68938297ae53d00cea9de0f8ac40000000000000000000000000000000000000000000000000000000000000000cc3c359e65eab066a3f450e0e462f0252ad7e252e9b0f2f2645c9360aa0ae82b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb551f84e7279cdf6acb81af77aec64f618f71029b7d9c6d37c035c37134e517af2eb1f7709512009ac2015d097119d8538a30fd122d3f92e7e07d034267f3e65120000000000000000000000000000000000000000000000000000000000000000";
+
+        // Call verifyMessage method on AvailAttestation contract
+        await expect(
+            AvailAttestation.verifyMessage(
+                ethers.keccak256(encodedMerkleProofInput), // Pass some valid bytes32 hash
+                encodedMerkleProofInput
+            )
+        ).to.not.be.reverted; // Ensure the transaction does not revert
+
+        console.log("verifyMessage executed successfully!");
     });
 });
 

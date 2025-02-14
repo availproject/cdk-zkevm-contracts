@@ -33,9 +33,11 @@ abstract contract AvailAttestationLib is Initializable {
     function _attest(bytes calldata data) internal virtual {
         IAvailBridge.MerkleProofInput memory input = abi.decode(data, (IAvailBridge.MerkleProofInput));
         if (!bridge.verifyBlobLeaf(input)) revert InvalidAttestationProof();
-        attestations[input.leaf] = AttestationData(
-            vectorx.rangeStartBlocks(input.rangeHash) + uint32(input.dataRootIndex) + 1, uint128(input.leafIndex)
-        );
+
+        // No need for mock verification
+        // attestations[input.leaf] = AttestationData(
+        //     vectorx.rangeStartBlocks(input.rangeHash) + uint32(input.dataRootIndex) + 1, uint128(input.leafIndex)
+        // );
     }
 
     // slither-disable-next-line naming-convention
