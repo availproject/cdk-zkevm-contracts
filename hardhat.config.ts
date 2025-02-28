@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-dependency-compiler";
 
-import {HardhatUserConfig} from "hardhat/config";
+import { HardhatUserConfig } from "hardhat/config";
 
 const DEFAULT_MNEMONIC = "test test test test test test test test test test test junk";
 
@@ -44,6 +44,14 @@ const config: HardhatUserConfig = {
                         runs: 999999,
                     },
                     evmVersion: "shanghai",
+                },
+            }, {
+                version: "0.8.25",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 999999,
+                    },
                 },
             },
             {

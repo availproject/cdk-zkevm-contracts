@@ -1,16 +1,16 @@
 /* eslint-disable no-await-in-loop, no-use-before-define, no-lonely-if */
 /* eslint-disable no-console, no-inner-declarations, no-undef, import/no-unresolved */
-import {expect} from "chai";
+import { expect } from "chai";
 import path = require("path");
 import fs = require("fs");
 
 import * as dotenv from "dotenv";
-dotenv.config({path: path.resolve(__dirname, "../../.env")});
-import {ethers, upgrades} from "hardhat";
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+import { ethers, upgrades } from "hardhat";
 
 const pathGenesis = path.join(__dirname, "./genesis.json");
 const pathGenesisSovereign = path.join(__dirname, "./genesis_sovereign.json");
-import {processorUtils, Constants} from "@0xpolygonhermez/zkevm-commonjs";
+import { processorUtils, Constants } from "@0xpolygonhermez/zkevm-commonjs";
 
 const createRollupParameters = require("./create_rollup_parameters.json");
 let genesis = require(pathGenesis);
@@ -48,6 +48,7 @@ async function main() {
         "adminZkEVM",
         "forkID",
         "consensusContract",
+        "availBridgeAddress"
     ];
 
     for (const parameterName of mandatoryDeploymentParameters) {
@@ -68,6 +69,7 @@ async function main() {
         consensusContract,
         isVanillaClient,
         sovereignParams,
+        availBridgeAddress,
     } = createRollupParameters;
 
     const supportedConsensus = ["PolygonZkEVMEtrog", "PolygonValidiumEtrog", "PolygonPessimisticConsensus"];
@@ -99,7 +101,7 @@ async function main() {
 
     const dataAvailabilityProtocol = createRollupParameters.dataAvailabilityProtocol || "PolygonDataCommittee";
 
-    const supportedDataAvailabilityProtocols = ["PolygonDataCommittee"];
+    const supportedDataAvailabilityProtocols = ["PolygonDataCommittee", "AvailDA"];
 
     if (
         consensusContract.includes("PolygonValidiumEtrog") &&
@@ -136,7 +138,7 @@ async function main() {
                         null,
                         ((feedata.maxFeePerGas as bigint) * BigInt(createRollupParameters.multiplierGas)) / 1000n,
                         ((feedata.maxPriorityFeePerGas as bigint) * BigInt(createRollupParameters.multiplierGas)) /
-                            1000n
+                        1000n
                     );
                 }
                 currentProvider.getFeeData = overrideFeeData;
@@ -357,6 +359,38 @@ async function main() {
         }
 
         outputJson.polygonDataCommitteeAddress = polygonDataCommittee?.target;
+    } else if (consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "AvailDA") {
+        const AvailAttestationContract = (await ethers.getContractFactory("AvailAttestation", deployer)) as any;
+        let availAttestation;
+
+        for (let i = 0; i < attemptsDeployProxy; i++) {
+            try {
+                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [availBridgeAddress], {
+                    unsafeAllow: ["constructor"],
+                });
+                break;
+            } catch (error: any) {
+                console.log(`attempt ${i}`);
+                console.log("upgrades.deployProxy of availAttestation ", error.message);
+            }
+            // reach limits of attempts
+            if (i + 1 === attemptsDeployProxy) {
+                throw new Error("availAttestation contract has not been deployed");
+            }
+        }
+        await availAttestation?.waitForDeployment();
+
+        // Load data commitee
+        const PolygonValidiumContract = (await PolygonconsensusFactory.attach(newZKEVMAddress)) as PolygonValidium;
+        // add data commitee to the consensus contract
+        await (await PolygonValidiumContract.setDataAvailabilityProtocol(availAttestation?.target as any)).wait();
+        console.log("#######################\n");
+        console.log("DataAvailabilityProtocol is set to:", await PolygonValidiumContract.dataAvailabilityProtocol());
+        console.log("RollupManager:", await PolygonValidiumContract.rollupManager());
+
+        await (await availAttestation?.transferOwnership(adminZkEVM)).wait();
+
+        outputJson.availAttestationAddress = availAttestation?.target;
     }
 
     // Assert admin address
