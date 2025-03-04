@@ -359,7 +359,7 @@ async function main() {
         }
 
         outputJson.polygonDataCommitteeAddress = polygonDataCommittee?.target;
-    } else if (consensusContract.includes("PolygonValidium") && dataAvailabilityProtocol === "AvailDA") {
+    } else if (consensusContract.includes("PolygonValidiumEtrog") && dataAvailabilityProtocol === "AvailDA") {
         const AvailAttestationContract = (await ethers.getContractFactory("AvailAttestation", deployer)) as any;
         let availAttestation;
 
@@ -367,6 +367,7 @@ async function main() {
             try {
                 availAttestation = await upgrades.deployProxy(AvailAttestationContract, [availBridgeAddress], {
                     unsafeAllow: ["constructor"],
+                    initializer: "initialize"
                 });
                 break;
             } catch (error: any) {
