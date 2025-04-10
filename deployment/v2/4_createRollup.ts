@@ -19,7 +19,6 @@ import "../helpers/utils";
 import updateVanillaGenesis from "./utils/updateVanillaGenesis";
 
 const pathOutputJson = path.join(__dirname, "./create_rollup_output.json");
-const deployParameters = require("./deploy_parameters.json");
 
 import {
     PolygonRollupManager,
@@ -519,6 +518,7 @@ async function main() {
     outputJson.consensusContract = consensusContract;
     outputJson.consensusContractAddress = PolygonconsensusContract.target;
     outputJson.rollupTypeId = newRollupTypeID;
+    outputJson.programVKey = programVKey;
 
     // Rewrite updated genesis in case of vanilla client
     if (isVanillaClient) {

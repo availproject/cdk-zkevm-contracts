@@ -293,7 +293,7 @@ async function main() {
     // Bridge implementation
     const bridgeImplementationInfo = await getAddressInfo(bridgeImplementationAddress as string);
     genesis.push({
-        contractName: `${bridgeContractName}`,
+        contractName: `${bridgeContractName} implementation`,
         balance: "0",
         nonce: bridgeImplementationInfo.nonce.toString(),
         address: finalBridgeImplAddress,
@@ -310,7 +310,7 @@ async function main() {
     genesis.push({
         contractName: `${bridgeContractName} proxy`,
         balance: balanceBridge,
-    nonce: bridgeProxyInfo.nonce.toString(),
+        nonce: bridgeProxyInfo.nonce.toString(),
         address: finalBridgeProxyAddress,
         bytecode: bridgeProxyInfo.bytecode,
         storage: bridgeProxyInfo.storage,
@@ -327,7 +327,7 @@ async function main() {
     }
 
     genesis.push({
-        contractName: `${globalExitRootContractName}`,
+        contractName: `${globalExitRootContractName} implementation`,
         balance: "0",
         nonce: implGlobalExitRootL2Info.nonce.toString(),
         address: finalGlobalExitRootL2ImplAddress,
