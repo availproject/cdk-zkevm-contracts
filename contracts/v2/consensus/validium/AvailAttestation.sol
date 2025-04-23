@@ -8,11 +8,29 @@ import {IDataAvailabilityProtocol} from "../../interfaces/IDataAvailabilityProto
 import {AvailAttestationLib} from "../../lib/AvailAttestationLib.sol";
 
 contract AvailAttestation is OwnableUpgradeable, IDataAvailabilityProtocol, AvailAttestationLib {
+
+    // True/False based on if Avail bridge attestation verification is enabled
+    bool public isEnabled;
+
+    event AvailBridgeVerificationToggled(bool enabled);
+
+    // Address that will be able to adjust contract parameters
+    address public admin;
+
+    modifier onlyAdmin() {
+        if (admin != msg.sender) {
+            revert OnlyAdmin();
+        }
+        _;
+    }
+
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(IAvailBridge bridge) external initializer {
+    function initialize(IAvailBridge bridge, address _admin) external initializer {
+        admin = _admin;
+        isEnabled = false;
         __AvailAttestation_init(bridge);
         __Ownable_init_unchained();
     }
@@ -21,17 +39,28 @@ contract AvailAttestation is OwnableUpgradeable, IDataAvailabilityProtocol, Avai
         return "AvailDA";
     }
 
-    // function verifyMessage(
-    //     bytes32,
-    //     IAvailBridge.MerkleProofInput calldata dataAvailabilityMessage
-    // ) external {
-    //     _attest(dataAvailabilityMessage);
-    // }
 
     function verifyMessage(
         bytes32,
         bytes calldata dataAttestationProof
     ) external {
-        _attest(dataAttestationProof);
+        if (isEnabled){
+            _attest(dataAttestationProof);
+        }
+    }
+
+    //////////////////
+    // admin functions
+    //////////////////
+
+    /**
+     * @notice Allow the admin to enable/disable the avail bridge attestation verification
+     * @param _isEnabled Enabled the avail bridge attestation verification
+     */
+    function setAvailBridgeVerificationEnabled(
+        bool _isEnabled
+    ) external onlyAdmin {
+        isEnabled = _isEnabled;
+        emit AvailBridgeVerificationToggled(_isEnabled);
     }
 }

@@ -364,7 +364,7 @@ async function main() {
 
         for (let i = 0; i < attemptsDeployProxy; i++) {
             try {
-                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [availBridgeAddress], {
+                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [availBridgeAddress, adminZkEVM], {
                     unsafeAllow: ["constructor"],
                     initializer: "initialize"
                 });
