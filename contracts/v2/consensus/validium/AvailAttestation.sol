@@ -14,6 +14,11 @@ contract AvailAttestation is OwnableUpgradeable, IDataAvailabilityProtocol, Avai
 
     event AvailBridgeVerificationToggled(bool enabled);
 
+    /**
+     * @dev Thrown when the caller is not the admin
+     */
+    error OnlyAdmin();
+
     // Address that will be able to adjust contract parameters
     address public admin;
 
