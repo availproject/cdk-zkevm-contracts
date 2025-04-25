@@ -370,7 +370,7 @@ async function main() {
 
         for (let i = 0; i < attemptsDeployProxy; i++) {
             try {
-                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [mockAvailBridge.target], {
+                availAttestation = await upgrades.deployProxy(AvailAttestationContract, [mockAvailBridge.target, adminZkEVM], {
                     unsafeAllow: ["constructor"],
                     initializer: "initialize"
                 });
