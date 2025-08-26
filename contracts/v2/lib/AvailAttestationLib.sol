@@ -30,7 +30,7 @@ abstract contract AvailAttestationLib is Initializable {
         vectorx = bridge.vectorx();
     }
 
-    function _attest(bytes calldata data) internal virtual {
+    function _attest(bytes memory data) internal virtual {
         IAvailBridge.MerkleProofInput memory input = abi.decode(data, (IAvailBridge.MerkleProofInput));
         if (!bridge.verifyBlobLeaf(input)) revert InvalidAttestationProof();
         attestations[input.leaf] = AttestationData(
