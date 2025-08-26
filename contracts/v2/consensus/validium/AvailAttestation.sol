@@ -18,6 +18,8 @@ contract AvailAttestation is OwnableUpgradeable, IDataAvailabilityProtocol, Avai
      * @dev Thrown when the caller is not the admin
      */
     error OnlyAdmin();
+    error InvalidDAMessageType();
+    error MissMatchBridgeEnabledAndDAMessageType();
 
     // Address that will be able to adjust contract parameters
     address public admin;
@@ -49,8 +51,14 @@ contract AvailAttestation is OwnableUpgradeable, IDataAvailabilityProtocol, Avai
         bytes32,
         bytes calldata dataAttestationProof
     ) external {
-        if (isEnabled){
-            _attest(dataAttestationProof);
+        (uint8 msgType, bytes memory payload) = abi.decode(data, (uint8, bytes));
+
+        if (msgType!=1 && msgType!=2) {
+            revert InvalidDAMessageType();
+        } else if((msgType ==2 && !isEnabled) || (msgType == 1 && isEnabled)){
+            revert MissMatchBridgeEnabledAndDAMessageType();
+        }else if (msgType == 2 && isEnabled) {
+            _attest(payload);
         }
     }
 
