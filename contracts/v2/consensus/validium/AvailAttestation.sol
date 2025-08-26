@@ -51,7 +51,7 @@ contract AvailAttestation is OwnableUpgradeable, IDataAvailabilityProtocol, Avai
         bytes32,
         bytes calldata dataAttestationProof
     ) external {
-        (uint8 msgType, bytes memory payload) = abi.decode(data, (uint8, bytes));
+        (uint8 msgType, bytes memory payload) = abi.decode(dataAttestationProof, (uint8, bytes));
 
         if (msgType!=1 && msgType!=2) {
             revert InvalidDAMessageType();

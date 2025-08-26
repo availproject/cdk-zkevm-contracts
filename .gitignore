@@ -26,3 +26,8 @@ docker/deploymentOutput
 .DS_Store
 
 tools/createSovereignGenesisWithHardhat/genesis-sovereign_hardhat.json
+
+create_rollup_output.json
+genesis.json
+migrate_da_protocol.json
+params.yml
